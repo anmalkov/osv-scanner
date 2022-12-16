@@ -1,41 +1,86 @@
 #!/usr/bin/env bash
 
+# usage: build-container-image.sh <docker_username> <docker_password> <docker_repository>
+
+docker_username=$1
+docker_password=$2
+docker_repository=$3
+
 set -e
+
 COLOR='\033[0;32m'
 NOCOLOR='\033[0m'
 
-# clone latest release of a github project
-# usage: git-clone-latest <owner> <project> [output_directory]
-gh-clone-latest() {
+# get latest release of a GitHub project
+# usage: github-get-latest-release <owner> <project>
+github-get-latest-release() {
   local owner=$1 project=$2
   local release_url=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/$owner/$project/releases/latest)
-  local release_tag=$(basename $release_url)
-  release=$release_tag
-  local output_directory=${3:-$owner-$project-release-$release_tag}
-  if [ -d "$output_directory" ];
+  local release=$(basename $release_url)
+  if [[ ${release::1} == "v" ]];
   then
-    printf "${COLOR}Directory already exists, removing $output_directory${NOCOLOR}\n"
-    rm -rf $output_directory
+    release=${release:1}
   fi
-  printf "\n${COLOR}Cloning $owner/$project release $release_tag to $output_directory${NOCOLOR}\n"
-  git clone -b $release_tag -- https://github.com/$owner/$project.git $output_directory
+  latest_release=$release
 }
 
-release=""
-osv_scanner_dir="osv-scanner-release-latest"
-gh-clone-latest "google" "osv-scanner" $osv_scanner_dir
+# clone  release of a GitHub project
+# usage: git-clone-latest <owner> <project> <release> [output_directory]
+github-clone-release() {
+  local owner=$1 project=$2 release=$3
+  if [[ ${release::1} != "v" ]];
+  then
+    release="v$release"
+  fi
+  local output_directory=${4:-$owner-$project-$release}
+  if [ -d "$output_directory" ];
+  then
+    rm -rf $output_directory
+  fi
+  git clone -b $release -- https://github.com/$owner/$project.git $output_directory
+}
 
-if [[ ${release::1} == "v" ]];
+# get latest tag of an image from Docker Hub
+# usage: dockerhub-get-latest-tag <owner> <project>
+dockerhub-get-latest-tag () {
+    local owner=$1 project=$2
+    local tags
+    readarray -t tags < <(curl -L -s https://registry.hub.docker.com/v2/repositories/$owner/$project/tags?page_size=1024 | jq '."results"[]["name"]' | tr -d '"')
+    local tag=${tags[0]}
+    if [[ $tag == "latest" ]];
+    then  
+        tag=${tags[1]}
+    fi
+    latest_tag=$tag
+}
+
+latest_tag=""
+dockerhub-get-latest-tag $docker_username $docker_repository
+printf "\n${COLOR}Latest image tag: $latest_tag${NOCOLOR}\n"
+
+latest_release=""
+github-get-latest-release "google" "osv-scanner"
+printf "\n${COLOR}Latest release: $latest_release${NOCOLOR}\n"
+
+if [[ $latest_tag == $latest_release ]];
 then
-  release=${release:1}
+    printf "\n${COLOR}Latest image tag and latest release are the same, nothing to do${NOCOLOR}\n"
+    exit 0
 fi
+
+osv_scanner_dir="osv-scanner-latest"
+printf "\n${COLOR}Cloning google/osv-scanner release $latest_release to $osv_scanner_dir${NOCOLOR}\n"
+github-clone-release "google" "osv-scanner" $latest_release $osv_scanner_dir
 
 cd $osv_scanner_dir
 
-printf "\n${COLOR}Building docker image with tag $relese${NOCOLOR}\n"
-docker build -t anmalkov/osv-scanner:$release .
-docker tag anmalkov/osv-scanner:$release anmalkov/osv-scanner:latest
+printf "\n${COLOR}Building docker image with tag $release${NOCOLOR}\n"
+docker build -t $docker_username/$docker_repository:$latest_release .
+docker tag $docker_username/$docker_repository:$latest_release $docker_username/$docker_repository:latest
+
+printf "\n${COLOR}Login to Docker Hub${NOCOLOR}\n"
+docker login -u $docker_username -p $docker_password
 
 printf "\n${COLOR}Pushing docker image${NOCOLOR}\n"
-docker push anmalkov/osv-scanner:$release
-docker push anmalkov/osv-scanner:latest
+docker push $docker_username/$docker_repository:$latest_release
+docker push $docker_username/$docker_repository:latest

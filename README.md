@@ -1,5 +1,7 @@
 # OSV-Scanner
 
+![Build Status](https://github.com/anmalkov/osv-scanner/actions/workflows/build-image.yml/badge.svg)
+
 This repository contains a script to build a container image for the latest release of Google OSV-Scanner tool and push it to Docker Hub.
 
 The image is available at [anmalkov/osv-scanner](https://hub.docker.com/r/anmalkov/osv-scanner).

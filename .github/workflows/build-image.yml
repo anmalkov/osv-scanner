@@ -18,5 +18,5 @@ jobs:
           then  
             latest_tag=${tags[1]}
           fi
-          echo "::set-env name=LATEST-TAG::$latest_tag"
-      - run: echo $LATEST-TAG
+          echo "latest_tag=$latest_tag" >> $GITHUB_ENV
+      - run: echo "${{ env.latest_tag }}"

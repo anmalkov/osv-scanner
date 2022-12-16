@@ -32,6 +32,10 @@ jobs:
           echo "latest_release=$latest_release" >> $GITHUB_ENV
       - name: Clone latest release
         if: env.latest_tag != env.latest_release
-        run: echo "continue"
+        run: git clone -b v$env.latest_release -- https://github.com/google/osv-scanner.git $GITHUB_WORKSPACE/repo
+      - name: Build image
+        run: |
+          docker build -t anmalkov/osv-scanner:$env.latest_release .
+          docker tag anmalkov/osv-scanner:$env.latest_release anmalkov/osv-scanner:latest
           
           

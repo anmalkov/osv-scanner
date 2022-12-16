@@ -18,5 +18,13 @@ jobs:
           then  
             latest_tag=${tags[1]}
           fi
+          echo "Latest image tag: $latest_tag"
           echo "latest_tag=$latest_tag" >> $GITHUB_ENV
-      - run: echo "${{ env.latest_tag }}"
+      - name: Get latest release
+        run: |
+          release_url=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/google/osv-scanner/releases/latest)
+          latest_release=$(basename $release_url)
+          echo "Latest release: $latest_release"
+          echo "latest_release=$latest_release" >> $GITHUB_ENV
+          
+          

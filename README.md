@@ -1,6 +1,6 @@
 # OSV-Scanner
 
-This repository contains a script to build a container image for Google OSV-Scanner tool and push it to Docker Hub.
+This repository contains a script to build a container image for the latest release of Google OSV-Scanner tool and push it to Docker Hub.
 
 The image is available at [anmalkov/osv-scanner](https://hub.docker.com/r/anmalkov/osv-scanner).
 

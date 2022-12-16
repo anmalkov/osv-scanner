@@ -1,0 +1,22 @@
+name: BuildImage
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get latest image tag
+        run: |
+          readarray -t tags < <(curl -L -s 'https://registry.hub.docker.com/v2/repositories/anmalkov/osv-scanner/tags?page_size=1024' | jq '."results"[]["name"]' | tr -d '"')
+          latest_tag=${tags[0]}
+          if [[ $latest_tag == "latest" ]];
+          then  
+            latest_tag=${tags[1]}
+          fi
+          echo "::set-env name=LATEST-TAG::$latest_tag"
+      - run: echo $LATEST-TAG

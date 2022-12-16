@@ -32,13 +32,13 @@ jobs:
           echo "latest_release=$latest_release" >> $GITHUB_ENV
       - name: Clone latest release
         #if: env.latest_tag != env.latest_release
-        run: git clone -b v$env.latest_release -- https://github.com/google/osv-scanner.git $GITHUB_WORKSPACE/repo
+        run: git clone -b v${{ env.latest_release }} -- https://github.com/google/osv-scanner.git $GITHUB_WORKSPACE/repo
       - name: Build image
         #if: env.latest_tag != env.latest_release
         run: |
           cd $GITHUB_WORKSPACE/repo
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/osv-scanner:$env.latest_release .
-          docker tag ${{ secrets.DOCKER_USERNAME }}/osv-scanner:$env.latest_release ${{ secrets.DOCKER_USERNAME }}/osv-scanner:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/osv-scanner:${{ env.latest_release }} .
+          docker tag ${{ secrets.DOCKER_USERNAME }}/osv-scanner:${{ env.latest_release }} ${{ secrets.DOCKER_USERNAME }}/osv-scanner:latest
       - name: Log in to Docker Hub
         #if: env.latest_tag != env.latest_release
         uses: docker/login-action@v2.1.0
@@ -48,7 +48,7 @@ jobs:
       - name: Push image
         #if: env.latest_tag != env.latest_release
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/osv-scanner:$release
+          docker push ${{ secrets.DOCKER_USERNAME }}/osv-scanner:${{ env.latest_release }}
           docker push ${{ secrets.DOCKER_USERNAME }}/osv-scanner:latest
           
           

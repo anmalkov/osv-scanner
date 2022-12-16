@@ -24,7 +24,7 @@ github-get-latest-release() {
   latest_release=$release
 }
 
-# clone  release of a GitHub project
+# clone release of a GitHub project
 # usage: git-clone-latest <owner> <project> <release> [output_directory]
 github-clone-release() {
   local owner=$1 project=$2 release=$3

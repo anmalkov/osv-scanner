@@ -24,7 +24,14 @@ jobs:
         run: |
           release_url=$(curl -Ls -o /dev/null -w %{url_effective} https://github.com/google/osv-scanner/releases/latest)
           latest_release=$(basename $release_url)
+          if [[ ${latest_release::1} == "v" ]];
+          then
+            latest_release=${latest_release:1}
+          fi
           echo "Latest release: $latest_release"
           echo "latest_release=$latest_release" >> $GITHUB_ENV
+      - name: Clone latest release
+        if: env.latest_tag != env.latest_release
+        run: echo "continue"
           
           
